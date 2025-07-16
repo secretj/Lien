@@ -1,14 +1,20 @@
 services:
   mysql:
-    image: 'mysql:latest'
+    image: mysql:8.0
+    container_name: mysql
     environment:
-      - 'MYSQL_DATABASE=mydatabase'
-      - 'MYSQL_PASSWORD=secret'
-      - 'MYSQL_ROOT_PASSWORD=verysecret'
-      - 'MYSQL_USER=myuser'
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: lien_db
+      MYSQL_USER: secretj
+      MYSQL_PASSWORD: test!
     ports:
-      - '3306'
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
   redis:
     image: 'redis:latest'
     ports:
       - '6379'
+
+volumes:
+  mysql-data:
