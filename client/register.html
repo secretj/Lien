@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - Lien</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>✨ Lien</h1>
+            <p>새로운 계정 만들기</p>
+        </div>
+
+        <div id="alert"></div>
+
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="name">이름</label>
+                <input 
+                    type="text" 
+                    id="name" 
+                    name="name" 
+                    placeholder="홍길동"
+                    required
+                    autocomplete="name"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="email">이메일</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    placeholder="your@email.com"
+                    required
+                    autocomplete="email"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">비밀번호</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    placeholder="••••••••"
+                    required
+                    minlength="6"
+                    autocomplete="new-password"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">비밀번호 확인</label>
+                <input 
+                    type="password" 
+                    id="confirmPassword" 
+                    name="confirmPassword" 
+                    placeholder="••••••••"
+                    required
+                    minlength="6"
+                    autocomplete="new-password"
+                >
+            </div>
+
+            <button type="submit" id="registerBtn">회원가입</button>
+        </form>
+
+        <p class="link-text">
+            이미 계정이 있으신가요? <a href="index.html">로그인</a>
+        </p>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // 이미 로그인된 경우 홈으로 리다이렉트
+        if (Auth.isAuthenticated()) {
+            window.location.href = 'home.html';
+        }
+
+        const registerForm = document.getElementById('registerForm');
+        const registerBtn = document.getElementById('registerBtn');
+        const alertDiv = document.getElementById('alert');
+
+        function showAlert(message, type = 'error') {
+            alertDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                alertDiv.innerHTML = '';
+            }, 5000);
+        }
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // 비밀번호 확인
+            if (password !== confirmPassword) {
+                showAlert('비밀번호가 일치하지 않습니다.');
+                return;
+            }
+
+            // 비밀번호 길이 체크
+            if (password.length < 6) {
+                showAlert('비밀번호는 최소 6자 이상이어야 합니다.');
+                return;
+            }
+
+            registerBtn.disabled = true;
+            registerBtn.textContent = '가입 중...';
+
+            try {
+                const response = await API.register(email, password, name);
+                
+                showAlert('회원가입 성공! 로그인 페이지로 이동합니다.', 'success');
+                
+                // 로그인 페이지로 이동
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+
+            } catch (error) {
+                let errorMessage = '회원가입에 실패했습니다.';
+                
+                if (error.message.includes('400')) {
+                    errorMessage = '이미 등록된 이메일입니다.';
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                showAlert(errorMessage);
+                registerBtn.disabled = false;
+                registerBtn.textContent = '회원가입';
+            }
+        });
+    </script>
+</body>
+</html>
+

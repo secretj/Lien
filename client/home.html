@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>홈 - Lien</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container home-container">
+        <div class="logo">
+            <h1>🎉 환영합니다!</h1>
+            <p>JWT 인증에 성공했습니다</p>
+        </div>
+
+        <div class="user-info">
+            <h2>사용자 정보</h2>
+            <div class="info-item">
+                <span class="info-label">이름</span>
+                <span class="info-value" id="userName">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">이메일</span>
+                <span class="info-value" id="userEmail">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">로그인 시간</span>
+                <span class="info-value" id="loginTime">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">토큰 만료 시간</span>
+                <span class="info-value" id="expiryTime">-</span>
+            </div>
+        </div>
+
+        <div class="token-box">
+            <h3>📜 JWT 토큰</h3>
+            <div class="token-value" id="tokenValue">로딩 중...</div>
+        </div>
+
+        <div class="token-box" style="margin-top: 16px;">
+            <h3>🔓 토큰 디코딩 정보 (Payload)</h3>
+            <div class="token-value" id="tokenPayload">로딩 중...</div>
+        </div>
+
+        <button class="btn-logout" onclick="handleLogout()">로그아웃</button>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // 인증 체크
+        if (!Auth.requireAuth()) {
+            // requireAuth에서 리다이렉트 처리
+        }
+
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        function formatTimestamp(timestamp) {
+            return formatDate(timestamp * 1000);
+        }
+
+        function loadUserData() {
+            const user = Auth.getUser();
+            const token = Auth.getToken();
+
+            if (!user || !token) {
+                Auth.logout();
+                return;
+            }
+
+            // 토큰 만료 체크
+            if (Auth.isTokenExpired(token)) {
+                alert('토큰이 만료되었습니다. 다시 로그인해주세요.');
+                Auth.logout();
+                return;
+            }
+
+            // 사용자 정보 표시
+            document.getElementById('userName').textContent = user.name;
+            document.getElementById('userEmail').textContent = user.email;
+
+            // 토큰 표시
+            document.getElementById('tokenValue').textContent = token;
+
+            // 토큰 디코딩
+            const payload = Auth.parseJWT(token);
+            if (payload) {
+                document.getElementById('tokenPayload').textContent = JSON.stringify(payload, null, 2);
+                
+                // 로그인 시간 (iat - issued at)
+                if (payload.iat) {
+                    document.getElementById('loginTime').textContent = formatTimestamp(payload.iat);
+                }
+                
+                // 만료 시간 (exp - expiration)
+                if (payload.exp) {
+                    document.getElementById('expiryTime').textContent = formatTimestamp(payload.exp);
+                    
+                    // 만료까지 남은 시간 표시
+                    const expiresIn = payload.exp * 1000 - Date.now();
+                    const minutes = Math.floor(expiresIn / 60000);
+                    document.getElementById('expiryTime').textContent += ` (${minutes}분 후 만료)`;
+                }
+            } else {
+                document.getElementById('tokenPayload').textContent = '토큰을 디코딩할 수 없습니다.';
+            }
+        }
+
+        function handleLogout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                Auth.logout();
+            }
+        }
+
+        // 페이지 로드 시 사용자 데이터 로드
+        loadUserData();
+
+        // 1분마다 토큰 만료 체크
+        setInterval(() => {
+            const token = Auth.getToken();
+            if (token && Auth.isTokenExpired(token)) {
+                alert('토큰이 만료되었습니다. 다시 로그인해주세요.');
+                Auth.logout();
+            }
+        }, 60000);
+    </script>
+</body>
+</html>
+

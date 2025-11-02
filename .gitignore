@@ -38,5 +38,3 @@ out/
 
 ### ENV ###
 .env
-.gitignore
-docker-compose.yml
