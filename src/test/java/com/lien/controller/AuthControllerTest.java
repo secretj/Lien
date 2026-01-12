@@ -58,7 +58,12 @@ class AuthControllerTest {
 
     @Test
     void 회원가입_이메일중복_실패() throws Exception {
-        userRepository.save(new User("test@email.com", "pw", "홍길동"));
+        userRepository.save(User.builder()
+                .email("test@email.com")
+                .password("pw")
+                .name("홍길동")
+                .enabled(true)
+                .build());
         Map<String, String> req = Map.of(
                 "email", "test@email.com",
                 "password", "pw1234",

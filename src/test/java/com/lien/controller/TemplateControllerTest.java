@@ -56,7 +56,12 @@ class TemplateControllerTest
         templateRepository.deleteAll();
         userRepository.deleteAll();
 
-        testUser = userRepository.save(new User("test@test.com", "password", "테스트유저"));
+        testUser = userRepository.save(User.builder()
+                .email("test@test.com")
+                .password("password")
+                .name("테스트유저")
+                .enabled(true)
+                .build());
         token = JwtUtil.generateToken(testUser.getEmail());
     }
 

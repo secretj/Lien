@@ -67,7 +67,12 @@ class TemplateServiceTest
         locationRepository.deleteAll();
         userRepository.deleteAll();
 
-        testUser = userRepository.save(new User("test@test.com", "password", "테스트유저"));
+        testUser = userRepository.save(User.builder()
+                .email("test@test.com")
+                .password("password")
+                .name("테스트유저")
+                .enabled(true)
+                .build());
     }
 
     @Test
@@ -159,7 +164,12 @@ class TemplateServiceTest
     {
         // given
         Template template = createTestTemplate("테스트");
-        User otherUser = userRepository.save(new User("other@test.com", "password", "다른유저"));
+        User otherUser = userRepository.save(User.builder()
+                .email("other@test.com")
+                .password("password")
+                .name("다른유저")
+                .enabled(true)
+                .build());
 
         // when & then
         assertThrows(IllegalArgumentException.class, () -> {

@@ -37,7 +37,12 @@ class UserServiceTest {
     @Test
     void 회원가입_이메일중복_실패() {
         Mockito.when(userRepository.findByEmail(anyString()))
-                .thenReturn(Optional.of(new User("test@email.com", "pw", "홍길동")));
+                .thenReturn(Optional.of(User.builder()
+                        .email("test@email.com")
+                        .password("pw")
+                        .name("홍길동")
+                        .enabled(true)
+                        .build()));
 
         assertThrows(IllegalArgumentException.class, () ->
                 userService.register("test@email.com", "pw1234", "홍길동"));
@@ -47,7 +52,12 @@ class UserServiceTest {
     void 로그인_성공() {
         String rawPw = "pw1234";
         String encodedPw = new BCryptPasswordEncoder().encode(rawPw);
-        User user = new User("test@email.com", encodedPw, "홍길동");
+        User user = User.builder()
+                .email("test@email.com")
+                .password(encodedPw)
+                .name("홍길동")
+                .enabled(true)
+                .build();
         Mockito.when(userRepository.findByEmail(anyString()))
                 .thenReturn(Optional.of(user));
 

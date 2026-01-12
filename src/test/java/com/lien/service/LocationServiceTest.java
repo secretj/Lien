@@ -38,7 +38,12 @@ class LocationServiceTest
     {
         locationRepository.deleteAll();
         userRepository.deleteAll();
-        testUser = userRepository.save(new User("test@test.com", "password", "테스트유저"));
+        testUser = userRepository.save(User.builder()
+                .email("test@test.com")
+                .password("password")
+                .name("테스트유저")
+                .enabled(true)
+                .build());
     }
 
     @Test
@@ -130,7 +135,12 @@ class LocationServiceTest
     {
         // given
         LocationResponse privateLocation = createTestLocation("비공개 장소", LocationCategory.ATTRACTION, false);
-        User otherUser = userRepository.save(new User("other@test.com", "password", "다른유저"));
+        User otherUser = userRepository.save(User.builder()
+                .email("other@test.com")
+                .password("password")
+                .name("다른유저")
+                .enabled(true)
+                .build());
 
         // when & then
         assertThrows(IllegalArgumentException.class, () -> {
@@ -143,7 +153,12 @@ class LocationServiceTest
     {
         // given
         LocationResponse publicLocation = createTestLocation("공개 장소", LocationCategory.ATTRACTION, true);
-        User otherUser = userRepository.save(new User("other@test.com", "password", "다른유저"));
+        User otherUser = userRepository.save(User.builder()
+                .email("other@test.com")
+                .password("password")
+                .name("다른유저")
+                .enabled(true)
+                .build());
 
         // when
         LocationResponse found = locationService.getLocation(otherUser, publicLocation.getId());
@@ -196,7 +211,12 @@ class LocationServiceTest
     {
         // given
         LocationResponse location = createTestLocation("테스트", LocationCategory.ATTRACTION, false);
-        User otherUser = userRepository.save(new User("other@test.com", "password", "다른유저"));
+        User otherUser = userRepository.save(User.builder()
+                .email("other@test.com")
+                .password("password")
+                .name("다른유저")
+                .enabled(true)
+                .build());
 
         LocationRequest updateRequest = new LocationRequest();
         updateRequest.setName("수정 시도");
