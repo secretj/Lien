@@ -151,6 +151,42 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     
     /*
+     * SpringDoc OpenAPI (Swagger UI)
+     * 
+     * 역할: REST API 문서 자동 생성 및 대화형 테스트 UI 제공
+     * 
+     * 이점:
+     * - API 명세 자동 생성 (OpenAPI 3.0 표준)
+     * - Swagger UI를 통한 API 테스트 (Postman 대체)
+     * - 프론트엔드 개발자와 협업 시 API 문서 제공
+     * - @Operation, @ApiResponse 어노테이션으로 상세 설명 추가
+     * 
+     * 접속 URL:
+     * - Swagger UI: http://localhost:8080/swagger-ui.html
+     * - OpenAPI JSON: http://localhost:8080/v3/api-docs
+     * 
+     * 예시:
+     * @Tag(name = "인증", description = "회원가입 및 로그인 API")
+     * @RestController
+     * @RequestMapping("/api/auth")
+     * public class AuthController {
+     *     
+     *     @Operation(summary = "회원가입", description = "새로운 사용자를 등록합니다")
+     *     @ApiResponses({
+     *         @ApiResponse(responseCode = "200", description = "회원가입 성공"),
+     *         @ApiResponse(responseCode = "400", description = "이미 가입된 이메일")
+     *     })
+     *     @PostMapping("/register")
+     *     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+     *         ...
+     *     }
+     * }
+     * 
+     * Spring Boot 3.x 호환 버전 사용
+     */
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+    
+    /*
      * JJWT (Java JWT Library)
      * 
      * 역할: JWT 토큰 생성 및 검증
