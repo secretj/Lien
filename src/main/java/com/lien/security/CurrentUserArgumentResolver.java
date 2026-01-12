@@ -5,6 +5,8 @@ import com.lien.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -118,7 +120,7 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
      * @return boolean true: 지원함, false: 지원하지 않음
      */
     @Override
-    public boolean supportsParameter(MethodParameter parameter) {
+    public boolean supportsParameter(@NonNull MethodParameter parameter) {
         return parameter.hasParameterAnnotation(CurrentUser.class)  // {@literal @}CurrentUser 어노테이션 확인
                 && parameter.getParameterType().equals(User.class);  // 파라미터 타입이 User인지 확인
     }
@@ -184,10 +186,10 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
      */
     @Override
     public Object resolveArgument(
-            MethodParameter parameter,
-            ModelAndViewContainer mavContainer,
-            NativeWebRequest webRequest,
-            WebDataBinderFactory binderFactory) {
+            @NonNull MethodParameter parameter,
+            @Nullable ModelAndViewContainer mavContainer,
+            @NonNull NativeWebRequest webRequest,
+            @Nullable WebDataBinderFactory binderFactory) {
         
         // 1. HTTP 요청 객체 추출
         HttpServletRequest request = (HttpServletRequest) webRequest.getNativeRequest();

@@ -4,6 +4,7 @@ import com.lien.security.CurrentUserArgumentResolver;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.lang.NonNull;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -130,7 +131,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
      * @param resolvers ArgumentResolver 목록
      */
     @Override
-    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
+    public void addArgumentResolvers(@NonNull List<HandlerMethodArgumentResolver> resolvers) {
         // CurrentUserArgumentResolver 등록
         // {@literal @}CurrentUser 어노테이션이 붙은 파라미터에 User 객체 자동 주입
         resolvers.add(currentUserArgumentResolver);
