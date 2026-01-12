@@ -26,6 +26,116 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.stream.Collectors;
 
+/**
+ * ==============================================================================
+ * Template Service (템플릿 서비스)
+ * ==============================================================================
+ * 
+ * 역할:
+ * - 여행 템플릿 관리 비즈니스 로직
+ * - 템플릿 CRUD 및 하위 엔티티 관리
+ * - 체크리스트, 일정, 활동 통합 관리
+ * 
+ * 관리 엔티티:
+ * 1. Template: 여행 기본 정보
+ * 2. ChecklistSection & ChecklistItem: 준비물 체크리스트
+ * 3. DaySchedule: 일별 일정
+ * 4. Activity: 세부 활동
+ * 
+ * 이점:
+ * 1. 복잡한 계층 구조 관리 (Template → DaySchedule → Activity)
+ * 2. 트랜잭션으로 데이터 일관성 보장
+ * 3. 권한 검증 (소유자만 수정/삭제)
+ * 4. 페이징으로 대용량 데이터 처리
+ * 5. DTO 변환으로 필요한 데이터만 노출
+ * 
+ * API 엔드포인트 구조:
+ * <pre>
+ * POST   /api/templates                           # 템플릿 생성
+ * GET    /api/templates                           # 템플릿 목록 (페이징)
+ * GET    /api/templates/{id}                      # 템플릿 상세
+ * PUT    /api/templates/{id}                      # 템플릿 수정
+ * DELETE /api/templates/{id}                      # 템플릿 삭제
+ * 
+ * POST   /api/templates/{id}/checklist            # 체크리스트 섹션 추가
+ * PUT    /api/templates/{id}/checklist/{sectionId}# 체크리스트 섹션 수정
+ * DELETE /api/templates/{id}/checklist/{sectionId}# 체크리스트 섹션 삭제
+ * 
+ * POST   /api/templates/{id}/days                 # 일정 추가
+ * PUT    /api/templates/{id}/days/{dayId}         # 일정 수정
+ * DELETE /api/templates/{id}/days/{dayId}         # 일정 삭제
+ * 
+ * POST   /api/templates/{id}/days/{dayId}/activities        # 활동 추가
+ * PUT    /api/templates/{id}/days/{dayId}/activities/{actId}# 활동 수정
+ * DELETE /api/templates/{id}/days/{dayId}/activities/{actId}# 활동 삭제
+ * </pre>
+ * 
+ * 트랜잭션 관리:
+ * - @Transactional: 쓰기 작업 (생성, 수정, 삭제)
+ * - @Transactional(readOnly = true): 읽기 작업 (성능 최적화)
+ * 
+ * 권한 검증:
+ * - findTemplateByIdAndUser: 모든 작업 전 소유자 확인
+ * - 타 사용자의 템플릿 접근 차단
+ * 
+ * 데이터 구조 예시:
+ * <pre>
+ * Template (제주도 3박 4일)
+ * ├─ ChecklistSection 1 (필수 서류)
+ * │  ├─ ChecklistItem 1 (여권)
+ * │  ├─ ChecklistItem 2 (항공권)
+ * │  └─ ChecklistItem 3 (호텔 예약 확인서)
+ * ├─ ChecklistSection 2 (의류)
+ * │  ├─ ChecklistItem 1 (티셔츠 3벌)
+ * │  └─ ChecklistItem 2 (바지 2벌)
+ * ├─ DaySchedule 1 (첫째 날)
+ * │  ├─ Activity 1 (14:00 - 공항 도착)
+ * │  └─ Activity 2 (16:00 - 호텔 체크인)
+ * ├─ DaySchedule 2 (둘째 날)
+ * │  ├─ Activity 1 (09:00 - 조식)
+ * │  ├─ Activity 2 (10:00 - 성산일출봉)
+ * │  └─ Activity 3 (14:00 - 섭지코지)
+ * └─ ...
+ * </pre>
+ * 
+ * 사용 예시:
+ * <pre>
+ * {@code
+ * @RestController
+ * @RequestMapping("/api/templates")
+ * public class TemplateController {
+ *     @Autowired
+ *     private TemplateService templateService;
+ *     
+ *     // 템플릿 생성
+ *     @PostMapping
+ *     public ResponseEntity<?> create(@CurrentUser User user, @RequestBody TemplateCreateRequest request) {
+ *         TemplateResponse response = templateService.createTemplate(user, request);
+ *         return ResponseEntity.ok(response);
+ *     }
+ *     
+ *     // 템플릿 목록 (페이징)
+ *     @GetMapping
+ *     public ResponseEntity<?> list(@CurrentUser User user, Pageable pageable) {
+ *         Page<TemplateResponse> page = templateService.getTemplates(user, pageable);
+ *         return ResponseEntity.ok(page);
+ *     }
+ *     
+ *     // 템플릿 상세 (체크리스트 + 일정 포함)
+ *     @GetMapping("/{id}")
+ *     public ResponseEntity<?> detail(@CurrentUser User user, @PathVariable Long id) {
+ *         Object response = templateService.getTemplateDetail(user, id);
+ *         return ResponseEntity.ok(response);
+ *     }
+ * }
+ * }
+ * </pre>
+ * 
+ * @see Template
+ * @see DaySchedule
+ * @see Activity
+ * @see ChecklistSection
+ */
 @Service
 @RequiredArgsConstructor
 public class TemplateService
