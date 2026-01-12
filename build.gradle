@@ -1,3 +1,10 @@
+/*
+ * Gradle Build Configuration
+ * 
+ * 이 파일은 프로젝트의 빌드 설정과 의존성을 관리합니다.
+ * PSR-12 스타일의 주석 작성 가이드를 따릅니다.
+ */
+
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.3'
@@ -7,12 +14,36 @@ plugins {
 group = 'com'
 version = '0.0.1-SNAPSHOT'
 
+/*
+ * Java 21 LTS 버전 사용
+ * 
+ * 이점:
+ * - Virtual Threads (경량 스레드) 지원으로 높은 동시성 처리
+ * - Record Patterns로 코드 간결성 향상
+ * - Pattern Matching 개선
+ * - 성능 향상 및 메모리 효율성
+ * 
+ * 예시:
+ * try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+ *     executor.submit(() -> handleRequest());
+ * }
+ */
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
+/*
+ * Annotation Processor 설정
+ * 
+ * 역할: Lombok, MapStruct 등의 어노테이션 프로세서가 
+ *       컴파일 시점에 코드를 생성할 수 있도록 설정
+ * 
+ * 이점: 
+ * - 보일러플레이트 코드 자동 생성
+ * - 컴파일 타임에 에러 검증
+ */
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
@@ -24,25 +55,262 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+    /*
+     * Spring Boot Data JPA
+     * 
+     * 역할: 데이터베이스 ORM(Object-Relational Mapping) 처리
+     * 
+     * 이점:
+     * - SQL 쿼리 자동 생성으로 생산성 향상
+     * - 데이터베이스 독립성 확보
+     * - N+1 문제 해결을 위한 fetch join 지원
+     * - 트랜잭션 관리 자동화
+     * 
+     * 예시:
+     * @Query("SELECT t FROM Template t JOIN FETCH t.daySchedules WHERE t.user.id = :userId")
+     * List<Template> findAllByUserIdWithSchedules(@Param("userId") Long userId);
+     * 
+     * 참고: spring-boot-starter-data-jdbc는 제거 (JPA가 JDBC 포함)
+     */
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    
+    /*
+     * Spring Boot Data Redis
+     * 
+     * 역할: 인메모리 캐싱 및 세션 관리
+     * 
+     * 이점:
+     * - 빠른 데이터 읽기/쓰기 (메모리 기반)
+     * - JWT 블랙리스트 관리
+     * - 사용자 세션 저장
+     * - API 응답 캐싱으로 DB 부하 감소
+     * 
+     * 예시:
+     * // JWT 블랙리스트 추가
+     * redisTemplate.opsForValue().set("blacklist:" + token, "true", 1, TimeUnit.HOURS);
+     * 
+     * // 템플릿 조회 결과 캐싱
+     * @Cacheable(value = "templates", key = "#id")
+     * public Template findById(Long id) { ... }
+     */
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    
+    /*
+     * Spring Security
+     * 
+     * 역할: 인증(Authentication) 및 인가(Authorization) 처리
+     * 
+     * 이점:
+     * - CSRF, XSS 등 보안 공격 방어
+     * - 비밀번호 암호화 (BCrypt)
+     * - JWT 기반 Stateless 인증
+     * - Role 기반 접근 제어
+     * 
+     * 예시:
+     * @PreAuthorize("hasRole('USER')")
+     * public void deleteTemplate(Long id) { ... }
+     */
     implementation 'org.springframework.boot:spring-boot-starter-security'
+    
+    /*
+     * Spring Web (MVC)
+     * 
+     * 역할: RESTful API 구축
+     * 
+     * 이점:
+     * - @RestController로 JSON 응답 자동 변환
+     * - 요청 검증 및 예외 처리
+     * - CORS 설정
+     * 
+     * 예시:
+     * @GetMapping("/api/templates/{id}")
+     * public ResponseEntity<TemplateResponse> getTemplate(@PathVariable Long id) { ... }
+     */
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    
+    /*
+     * Validation
+     * 
+     * 역할: 요청 데이터 검증
+     * 
+     * 이점:
+     * - 어노테이션 기반 검증 (@NotNull, @Email, @Size 등)
+     * - 커스텀 Validator 생성 가능
+     * - 일관된 에러 응답
+     * 
+     * 예시:
+     * public class UserRegisterRequest {
+     *     @Email(message = "유효한 이메일을 입력하세요")
+     *     @NotBlank(message = "이메일은 필수입니다")
+     *     private String email;
+     *     
+     *     @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다")
+     *     private String password;
+     * }
+     */
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    
+    /*
+     * JJWT (Java JWT Library)
+     * 
+     * 역할: JWT 토큰 생성 및 검증
+     * 
+     * 이점:
+     * - Stateless 인증으로 서버 확장성 향상
+     * - 모바일 앱, SPA에 적합
+     * - Refresh Token으로 보안 강화
+     * 
+     * 구성:
+     * - jjwt-api: 인터페이스 정의
+     * - jjwt-impl: 실제 구현체 (런타임에만 필요)
+     * - jjwt-jackson: JSON 직렬화 (런타임에만 필요)
+     * 
+     * 예시:
+     * String token = Jwts.builder()
+     *     .setSubject(user.getEmail())
+     *     .setIssuedAt(new Date())
+     *     .setExpiration(new Date(System.currentTimeMillis() + 3600000))
+     *     .signWith(key, SignatureAlgorithm.HS256)
+     *     .compact();
+     */
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
     
-    // MapStruct for DTO mapping
+    /*
+     * MapStruct
+     * 
+     * 역할: Entity ↔ DTO 자동 매핑
+     * 
+     * 이점:
+     * - 컴파일 타임에 매핑 코드 생성 (런타임 성능 우수)
+     * - 타입 안정성 보장
+     * - 반복적인 변환 코드 제거
+     * 
+     * 예시:
+     * @Mapper(componentModel = "spring")
+     * public interface TemplateMapper {
+     *     @Mapping(source = "user.name", target = "userName")
+     *     TemplateResponse toResponse(Template template);
+     * }
+     */
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
     
+    /*
+     * Lombok
+     * 
+     * 역할: 보일러플레이트 코드 자동 생성
+     * 
+     * 이점:
+     * - @Getter/@Setter로 접근자 메서드 자동 생성
+     * - @Builder로 빌더 패턴 구현
+     * - @NoArgsConstructor/@AllArgsConstructor로 생성자 생성
+     * - 코드 가독성 향상
+     * 
+     * 예시:
+     * @Getter @Setter
+     * @Builder
+     * @NoArgsConstructor
+     * @AllArgsConstructor
+     * public class User {
+     *     private Long id;
+     *     private String email;
+     * }
+     * 
+     * // 사용
+     * User user = User.builder()
+     *     .email("test@example.com")
+     *     .build();
+     * 
+     * 참고: lombok-mapstruct-binding은 Lombok과 MapStruct의 
+     *       어노테이션 프로세서 충돌 방지
+     */
     compileOnly 'org.projectlombok:lombok'
-    developmentOnly 'org.springframework.boot:spring-boot-devtools'
-    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
-    runtimeOnly 'com.mysql:mysql-connector-j'
     annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+    
+    /*
+     * MySQL Connector
+     * 
+     * 역할: MySQL 데이터베이스 드라이버
+     * 
+     * 이점:
+     * - 안정적인 MySQL 연결
+     * - Connection Pool 지원
+     * - 트랜잭션 관리
+     * 
+     * 설정 예시 (application.properties):
+     * spring.datasource.url=jdbc:mysql://localhost:3306/lien_db
+     * spring.datasource.username=root
+     * spring.datasource.password=password
+     */
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    
+    /*
+     * Spring Boot DevTools
+     * 
+     * 역할: 개발 편의성 향상
+     * 
+     * 이점:
+     * - 코드 변경 시 자동 재시작 (LiveReload)
+     * - 캐시 비활성화로 즉시 반영
+     * - 개발 환경에서만 활성화 (프로덕션에서 자동 비활성화)
+     * 
+     * 예시:
+     * - Controller 수정 → 자동 재시작 → 브라우저 새로고침 불필요
+     */
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    
+    /*
+     * Docker Compose Support
+     * 
+     * 역할: 로컬 개발 시 Docker Compose 자동 실행
+     * 
+     * 이점:
+     * - MySQL, Redis 자동 시작
+     * - 별도의 docker-compose up 명령 불필요
+     * - 일관된 개발 환경 제공
+     */
+    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+    
+    /*
+     * Test Dependencies
+     * 
+     * spring-boot-starter-test: JUnit5, AssertJ, Mockito 포함
+     * - 단위 테스트 및 통합 테스트 지원
+     * 
+     * spring-security-test: Security 테스트 유틸리티
+     * - @WithMockUser로 인증된 사용자 테스트
+     * 
+     * h2: 인메모리 데이터베이스
+     * - 테스트 시 MySQL 대신 사용 (빠른 테스트)
+     * 
+     * mockito-core: Mock 객체 생성
+     * 
+     * byte-buddy-agent: Mockito final 클래스 mocking 지원
+     * 
+     * 예시:
+     * @SpringBootTest
+     * @Transactional
+     * class TemplateServiceTest {
+     *     @Autowired
+     *     private TemplateService templateService;
+     *     
+     *     @Test
+     *     @WithMockUser(username = "test@example.com")
+     *     void 템플릿_생성_테스트() {
+     *         // given
+     *         TemplateCreateRequest request = ...
+     *         
+     *         // when
+     *         Template result = templateService.create(request);
+     *         
+     *         // then
+     *         assertThat(result.getTitle()).isEqualTo("제주도 여행");
+     *     }
+     * }
+     */
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -51,6 +319,18 @@ dependencies {
     testImplementation 'com.h2database:h2:2.1.214'
 }
 
+/*
+ * 테스트 설정
+ * 
+ * useJUnitPlatform(): JUnit 5 사용
+ * jvmArgs: Mockito가 final 클래스를 mock하기 위한 Java Agent 설정
+ * 
+ * 역할: byte-buddy-agent를 JVM에 연결하여 런타임 클래스 수정 허용
+ * 
+ * 이점:
+ * - final 클래스/메서드 mocking 가능
+ * - Spring Security의 SecurityContext 등 테스트 가능
+ */
 tasks.named('test') {
     useJUnitPlatform()
     jvmArgs '-javaagent:' + configurations.testRuntimeClasspath.find { it.name.contains('byte-buddy-agent') }.absolutePath

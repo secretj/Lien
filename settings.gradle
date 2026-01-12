@@ -1,1 +1,108 @@
+/*
+ * ==============================================================================
+ * Gradle Settings Configuration
+ * ==============================================================================
+ * 이 파일은 Gradle 프로젝트의 기본 설정을 관리합니다.
+ * 
+ * 역할:
+ * 1. 프로젝트 이름 정의
+ * 2. 빌드 캐시 설정
+ * 3. 멀티 프로젝트 구성 (필요시)
+ * ==============================================================================
+ */
+
+/*
+ * 프로젝트 이름 설정
+ * 
+ * 역할: 빌드된 JAR 파일명의 기본값으로 사용
+ * 
+ * 예시:
+ * rootProject.name = 'lien'
+ * version = '0.0.1-SNAPSHOT'
+ * -> 생성되는 JAR: lien-0.0.1-SNAPSHOT.jar
+ */
 rootProject.name = 'lien'
+
+/*
+ * ==============================================================================
+ * Gradle Build Cache Configuration
+ * ==============================================================================
+ * 역할: 이전 빌드 결과를 재사용하여 빌드 속도 향상
+ * 
+ * 이점:
+ * 1. 변경되지 않은 태스크 건너뛰기
+ * 2. 빌드 시간 대폭 단축 (최대 90% 감소)
+ * 3. CI/CD 파이프라인 속도 향상
+ * 4. 개발 생산성 향상
+ * 
+ * 성능 비교 예시:
+ * - 첫 빌드 (캐시 없음): 2분 30초
+ * - 소스 코드 일부 변경 후 빌드 (캐시 사용): 15초
+ * - 의존성 변경 없이 빌드 (캐시 사용): 5초
+ * 
+ * 동작 원리:
+ * 1. Gradle이 각 태스크의 입력(소스 코드, 의존성)을 해시화
+ * 2. 해시값이 이전과 같으면 캐시된 출력 사용
+ * 3. 해시값이 다르면 태스크 재실행 및 결과 캐싱
+ * 
+ * 예시 시나리오:
+ * 
+ * [시나리오 1: 테스트 코드만 수정]
+ * $ ./gradlew build
+ * > Task :compileJava UP-TO-DATE     <- 캐시 사용
+ * > Task :processResources UP-TO-DATE <- 캐시 사용
+ * > Task :classes UP-TO-DATE          <- 캐시 사용
+ * > Task :compileTestJava              <- 재실행 (변경됨)
+ * > Task :test                         <- 재실행
+ * BUILD SUCCESSFUL in 15s
+ * 
+ * [시나리오 2: 의존성 변경 없이 깨끗한 빌드]
+ * $ ./gradlew clean build
+ * > Task :compileJava FROM-CACHE      <- 캐시에서 복원
+ * > Task :processResources FROM-CACHE <- 캐시에서 복원
+ * BUILD SUCCESSFUL in 8s
+ * ==============================================================================
+ */
+buildCache {
+    /*
+     * 로컬 빌드 캐시 설정
+     * 
+     * enabled: 캐시 활성화
+     * 이점: 개발자 로컬 환경에서 빌드 속도 향상
+     * 
+     * directory: 캐시 저장 위치
+     * 경로: <project-root>/build-cache
+     * 크기: 일반적으로 100-500MB
+     * 
+     * removeUnusedEntriesAfterDays: 미사용 캐시 자동 정리
+     * 이점: 디스크 공간 절약, 오래된 캐시 제거
+     * 예시: 30일 동안 사용하지 않은 캐시는 자동 삭제
+     * 
+     * 캐시 관리 명령어:
+     * $ ./gradlew clean          # 빌드 출력물 삭제 (캐시는 유지)
+     * $ rm -rf build-cache       # 캐시 수동 삭제
+     * $ ./gradlew --build-cache  # 캐시 강제 활성화 (settings.gradle 설정 덮어쓰기)
+     * 
+     * 캐시 확인:
+     * $ du -sh build-cache       # 캐시 크기 확인
+     * $ ls -lh build-cache       # 캐시 내용 확인
+     * 
+     * 주의사항:
+     * - CI/CD 환경에서는 원격 캐시(remote cache) 사용 권장
+     * - 로컬 캐시는 개발자 환경에 한정
+     * - Git에 build-cache 디렉토리 추가하지 않도록 .gitignore 설정 필수
+     * 
+     * 원격 캐시 설정 예시 (Gradle Enterprise):
+     * buildCache {
+     *     remote(HttpBuildCache) {
+     *         url = 'https://gradle-cache.example.com/'
+     *         push = true  // CI 서버에서만 push 활성화
+     *     }
+     * }
+     */
+    local {
+        enabled = true
+        directory = new File(rootDir, 'build-cache')
+        removeUnusedEntriesAfterDays = 30
+    }
+}
